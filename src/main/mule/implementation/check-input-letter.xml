@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="check-input-letter-sub-flow" doc:id="b6af83ec-71d3-4506-9f41-c889b4b7203d" >
+		<logger level="INFO" doc:name="Start Log" doc:id="507a250f-1af7-44c5-b38e-345b2671d9cf" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow Start",&#10;    message: "Flow to check input letter started",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<set-variable value='#[upper(attributes.queryParams.letter default "")]' doc:name="inputLetter" doc:id="baa8337f-4c35-4cbb-a8c6-304ae714c822" variableName="inputLetter"/>
+		<flow-ref doc:name="common-os-retrieve-sub-flow" doc:id="5422b0a3-dc95-4911-b78e-41fbf1ab54a1" name="common-os-retrieve-sub-flow"/>
+		<ee:transform doc:name="Updated Values For gameId Key" doc:id="49af887e-e77a-4dea-9e70-69d005b5a532" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+fun getUpdatedGuessedLetters(currentLetters, newLetter) =
+    if ((currentLetters contains newLetter) or (newLetter == ""))
+    currentLetters
+    else (currentLetters + newLetter)
+
+fun getUpdatedDisplayWord(secretWord, guessedLetters) =
+    (secretWord splitBy "" map (char) -> if (guessedLetters contains char) char else "_") joinBy ""
+
+fun getUpdatedLives(currentGameState, newLetter) =
+    if ((currentGameState.secretWord contains newLetter) or (currentGameState.guessedLetters contains newLetter) or (newLetter == ""))
+    currentGameState.lives
+    else currentGameState.lives - 1
+
+fun getUpdatedStatus(displayWord, secretWord, lives) =
+    if (displayWord == secretWord) "WON"
+    else if (lives == 0) "LOST"
+    else "IN_PROGRESS"
+
+fun getUpdatedMessage(currentGameState, newLetter, status, lives) =
+    if (newLetter == "") "You didn't enter a letter!"
+    else if (status == "WON") "YOU WIN! The word was " ++ currentGameState.secretWord
+    else if (status == "LOST") "GAME OVER. The word was " ++ currentGameState.secretWord
+    else if (currentGameState.guessedLetters contains newLetter) "You already guessed '" ++ newLetter ++ "'. Try again."
+    else if (currentGameState.secretWord contains newLetter) "Good guess!"
+    else "Sorry, '" ++ newLetter ++ "' is not in the word."
+
+---
+
+{
+    gameId: payload.gameId,
+    secretWord: payload.secretWord,
+    question: payload.question, 
+    defaultClues: payload.defaultClues, 
+    displayWord: getUpdatedDisplayWord(
+        payload.secretWord, 
+        getUpdatedGuessedLetters(payload.guessedLetters, vars.inputLetter)
+    ),
+    lives: getUpdatedLives(payload, vars.inputLetter),
+    guessedLetters: getUpdatedGuessedLetters(payload.guessedLetters, vars.inputLetter),
+    status: getUpdatedStatus(
+        getUpdatedDisplayWord(
+            payload.secretWord, 
+            getUpdatedGuessedLetters(payload.guessedLetters, vars.inputLetter)
+        ),
+        payload.secretWord, 
+        getUpdatedLives(payload, vars.inputLetter)
+    ),
+    message: getUpdatedMessage(
+        payload, 
+        vars.inputLetter, 
+        getUpdatedStatus(
+            getUpdatedDisplayWord(
+                payload.secretWord, 
+                getUpdatedGuessedLetters(payload.guessedLetters, vars.inputLetter)
+            ),
+            payload.secretWord, 
+            getUpdatedLives(payload, vars.inputLetter)
+        ),
+        getUpdatedLives(payload, vars.inputLetter)
+    )
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="common-os-store-sub-flow" doc:id="3d0fe471-4df1-497f-aded-c20e3ef7bdce" name="common-os-store-sub-flow"/>
+		<flow-ref doc:name="common-parse-template-sub-flow" doc:id="f2b399b9-aefc-4c68-a995-4a6a610ed7eb" name="common-parse-template-sub-flow"/>
+		<logger level="INFO" doc:name="End Log" doc:id="b7ad42e0-861e-42c7-93ab-0a803f1ca1ce" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow End",&#10;    message: "Flow to check input letter ended",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+	</sub-flow>
+</mule>

@@ -1,0 +1,9 @@
+# Dev Configuration
+
+gemini:
+  host: "generativelanguage.googleapis.com"
+  base-path: "/v1beta/models"
+  path: "/gemini-2.0-flash:generateContent"
+  port: "443"
+  
+

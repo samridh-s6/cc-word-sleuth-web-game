@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="common-http-request-sub-flow" doc:id="5118be06-28dd-4f32-b07c-5a19eb3d4a73" >
+		<logger level="INFO" doc:name="Start Log" doc:id="ad6a2135-68f9-433b-a562-ea916343099f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow Start",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]' />
+		<until-successful maxRetries="${until-successful.max-retries}" doc:name="until-successful" doc:id="21f1db4e-76d0-4331-bf28-6f64e5f9f74a" millisBetweenRetries="${until-successful.ms-between-retries}">
+			<http:request method="#[vars.httpOperation.method]" doc:name="Call Gemini API" doc:id="b37374fc-9cee-483b-a67d-aef9cbee8696" config-ref="http-request-configuration" path="#[vars.httpOperation.path]">
+			<http:headers><![CDATA[#[vars.httpOperation.headers]]]></http:headers>
+			<http:query-params><![CDATA[#[vars.httpOperation.queryParameters]]]></http:query-params>
+		</http:request>
+		</until-successful>
+		<logger level="INFO" doc:name="End Log" doc:id="2147da8e-45a1-40e9-b19d-50aa6d64e3cc" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow End",&#10;    message: payload,&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]' />
+	</sub-flow>
+</mule>

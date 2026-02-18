@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:request-config name="http-request-configuration" doc:name="HTTP Request configuration" doc:id="ff12af67-4cbd-4b81-843a-1cce8442cdb9" basePath="#[vars.httpOperation.basePath]">
+		<http:request-connection protocol="HTTPS" host="#[vars.httpOperation.host]" port="#[vars.httpOperation.port]"/>
+	</http:request-config>
+	<http:listener-config name="http-listener-config" doc:name="HTTP Listener config" doc:id="c196fb87-55db-4899-b86b-17a3297dd3e2" basePath="${http.base-path}" >
+		<http:listener-connection host="${http.host}" port="${http.port}" readTimeout="${http.read-timeout}"/>
+	</http:listener-config>
+	<os:object-store name="object-store-config" doc:name="Object store" doc:id="ba845035-6219-4c0f-a511-b96f34f460ee"/>
+	<configuration-properties
+		doc:name="configuration-properties"
+		doc:id="f8177c02-a29e-4c75-b967-3647243b1dfa"
+		file="properties/config-${mule.env}.yaml"
+		doc:description="Environment Specific" />
+	<configuration-properties
+		doc:name="configuration-properties"
+		doc:id="b7c32f6e-86aa-4b3b-982d-022c57b3df3f"
+		file="properties\common\common.yaml"
+		doc:description="Common Properties" />
+	
+	
+	<secure-properties:config name="secure-properties-config" doc:name="Secure Properties Config" doc:id="35f6b8e2-a97e-4b30-b4f0-936e871dfbdf" file="properties/secure/config-${mule.env}-secure.yaml" key="${mule.key}" />
+	
+	
+</mule>

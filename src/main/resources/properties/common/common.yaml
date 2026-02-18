@@ -1,0 +1,13 @@
+# Common Configuration
+
+# Listener Configuration
+http:
+  host: "0.0.0.0"
+  read-timeout: "30000"
+  port: "8081"
+  base-path: "cc-word-sleuth"    
+  
+until-successful:
+  max-retries: "3"
+  ms-between-retries: "600"
+  

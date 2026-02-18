@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="cc-word-sleuth-web-game-flow" doc:id="663d09d5-31de-44b5-b2d7-184b358db46c" >
+		<http:listener doc:name="Listener" doc:id="41b83a82-cf41-4056-a272-d09d84b4a0be" config-ref="http-listener-config" path="/*"/>
+		<logger level="INFO" doc:name="Start Log" doc:id="4d27e1fc-65a1-4c79-8d91-71eccd7f8d3f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow Start",&#10;    message: "Main flow has started",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<choice doc:name="Check Resource Path" doc:id="50af64a3-e742-4ecd-8f9a-cc6bff4179b1" >
+			<when expression='#[attributes.relativePath ~= "/web-game"]'>
+				<flow-ref doc:name="generate-game-id-sub-flow" doc:id="0ce577d0-7c51-4657-bdb2-0c2fa40ce0c8" name="generate-game-id-sub-flow"/>
+			</when>
+			<when expression='#[attributes.relativePath ~= "/guess"]'>
+				<flow-ref doc:name="check-input-letter-sub-flow" doc:id="8601613a-7ad3-4d34-ae61-047f8d5b3ea1" name="check-input-letter-sub-flow"/>
+			</when>
+			<when expression='#[attributes.relativePath ~= "/clue"]'>
+				<flow-ref doc:name="post-clue-sub-flow" doc:id="d4b931a2-0763-4dc2-bbac-1504cb6ccc0f" name="post-clue-sub-flow"/>
+			</when>
+		</choice>
+		<logger level="INFO" doc:name="End Log" doc:id="ff84232d-228d-41a9-9fa3-d994cc4b5eae" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow End",&#10;    message: "Main flow has ended",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<error-handler ref="common-exception-handler" />
+	</flow>
+</mule>

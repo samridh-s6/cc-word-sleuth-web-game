@@ -1,0 +1,11 @@
+%dw 2.0
+
+type auto_5118be06_28dd_4f32_b07c_5a19eb3d4a73_Output_Variables_httpOperation = {|
+  method: String, 
+  host: String, 
+  basePath: String, 
+  path: String, 
+  headers: {| Accept: String |}, 
+  queryParameters: {| key: String |}
+|}
+

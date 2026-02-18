@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<sub-flow name="common-os-retrieve-sub-flow" doc:id="f00f93ea-19e6-496d-beda-b7c89972cf1d" >
+		<logger level="INFO" doc:name="Start Log" doc:id="ded0119c-ce0e-4cbb-8dc8-2822c01ab7f7" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow Start",&#10;    message: "Sub flow to retrieve gameId and status started",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<os:retrieve doc:name="gameId" doc:id="e9a43330-d95c-4a8c-ad22-aa4b68c6cc86" objectStore="object-store-config" key="#[attributes.queryParams.gameId]"/>
+		<logger level="INFO" doc:name="End Log" doc:id="8bff54c4-eea1-4c20-a346-b277b73401fe" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow End",&#10;    message: "Sub flow to retrieve the gameId and value ended",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+	</sub-flow>
+</mule>

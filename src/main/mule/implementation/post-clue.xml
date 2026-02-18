@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<sub-flow name="post-clue-sub-flow" doc:id="12b4ad8e-b06d-4eab-9f37-5545a5b20fc8" >
+		<logger level="INFO" doc:name="Start Log" doc:id="6fbcc9ae-2eb1-48b8-8b8d-0c57582a22ee" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow Start",&#10;    message: "Flow to get the clue, post it on UI and update the game status started",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<flow-ref doc:name="common-os-retrieve-sub-flow" doc:id="d39ea8cd-248b-42da-9b74-a68c6934b42a" name="common-os-retrieve-sub-flow" target="gameState"/>
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    &quot;method&quot;: &quot;POST&quot;,&#10;    &quot;host&quot;: Mule::p('gemini.host'),&#10;    &quot;basePath&quot;: Mule::p('gemini.base-path'),&#10;    &quot;path&quot;: Mule::p('gemini.path'),&#10;    &quot;headers&quot;: {&#10;        &quot;Accept&quot;: &quot;application/json&quot;&#10;    },&#10;    queryParameters: {&#10;    	&quot;key&quot;: Mule::p('secure::gemini.key')&#10;    }&#10;}]" doc:name="httpOperation" doc:id="384551c3-3791-4320-a7a4-e72244e2b24e" variableName="httpOperation"/>
+		<scatter-gather doc:name="get-different-clue" doc:id="7206ae5f-4e69-44ad-9187-7979581cfcaa" >
+			<route >
+				<try doc:name="Try" doc:id="e3426c4e-2546-4fd3-a9fb-254ba942419a" >
+					<ee:transform doc:name="Prompt To Get Definition" doc:id="d073391c-b4e9-4ba1-8f31-eb29c4d8ed97" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "contents": [{
+    "parts": [{
+      "text": "You are creating a clue for a word game. Provide a short, technical definition for the term '$(vars.gameState.secretWord)'. Crucially, do not use the word '$(vars.gameState.secretWord)' in your response."
+    }]
+  }]
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<flow-ref doc:name="common-http-request-sub-flow" doc:id="a61f8b87-b7fc-4106-a8f6-a35a31c3cc32" name="common-http-request-sub-flow"/>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="85570742-751d-4e31-8073-1c5c3a304452" >
+							<ee:transform doc:name="Default Definition" doc:id="341160a9-68ba-4c2f-86dd-b590eedb3580" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+
+{
+  "candidates": [{
+    "content": {
+      "parts": [{
+        "text": vars.gameState.defaultClues.definition
+      }]
+    }
+  }]
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</route>
+			<route >
+				<try doc:name="Try" doc:id="a6116bcf-fdfe-41a2-835e-75de6680b802" >
+					<ee:transform doc:name="Prompt To Get Rhyming Word" doc:id="636581cf-3d48-428b-90a4-1764677e2576">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "contents": [{
+    "parts": [{
+      "text": "You are creating a clue for a word game. Provide a single common English word that rhymes with or sounds very similar to '$(vars.gameState.secretWord)'. Give only the rhyming word in your response. For example, if the word was 'Mule', you could respond with 'Cool'."
+    }]
+  }]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+					<flow-ref doc:name="common-http-request-sub-flow" doc:id="f8795ff7-d5c9-4bff-b124-46a30f565e49" name="common-http-request-sub-flow"/>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ca0220ec-a68b-4dc9-9009-52c857c71830" >
+							<ee:transform doc:name="Default Rhyming Word" doc:id="678f6d54-36b5-42d0-a826-ffa21bf81d83" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+
+{
+  "candidates": [{
+    "content": {
+      "parts": [{
+        "text": vars.gameState.defaultClues.rhyme
+      }]
+    }
+  }]
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</route>
+			<route >
+				<try doc:name="Try" doc:id="19871a30-1b00-47bd-9c5a-4efec4b4858c" >
+					<ee:transform doc:name="Prompt To Get Synonym" doc:id="f159338e-b54a-4596-a5dc-9352798c4b43">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "contents": [{
+    "parts": [{
+      "text": "You are creating a clue for a word game. Provide a single technical synonym or a closely related two-word concept for the term '$(vars.gameState.secretWord)'. Do not use the word '$(vars.gameState.secretWord)' in your response. Give only the synonym or concept in your response."
+    }]
+  }]
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+					<flow-ref doc:name="common-http-request-sub-flow" doc:id="298b2de9-ee31-428c-b805-3544667050ea" name="common-http-request-sub-flow"/>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c5910280-b138-47ba-bf88-82d473ea693c" >
+							<ee:transform doc:name="Default Synonym" doc:id="ad67a6dc-ac69-4ff7-a62f-e44d38b7fe69" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+  "candidates": [{
+    "content": {
+      "parts": [{
+        "text": vars.gameState.defaultClues.synonym
+      }]
+    }
+  }]
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</route>
+		</scatter-gather>
+		<logger level="INFO" doc:name="Clue Package Resposne " doc:id="df5bb6b0-0ad5-4d91-9077-b533945ffc64" message="#[payload]"/>
+		<ee:transform doc:name="Set Definition, Rhyme, Synonym" doc:id="8fe55f82-f57b-4a62-b8db-d45592fa2995" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+  definition: payload."0".payload.candidates[0].content.parts[0].text default "Could not generate a creative clue.",
+  rhyme: payload."1".payload.candidates[0].content.parts[0].text default "Could not generate a synonym.",
+  synonym: payload."2".payload.candidates[0].content.parts[0].text default "Could not generate an example."
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Update gameState" doc:id="c65084d7-8d45-4dc4-9b42-9b183a3a0f8b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+vars.gameState ++ {
+  clues: payload,
+  lives: vars.gameState.lives - 1,
+  message: "Clue package received! It cost one life."
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="common-os-store-sub-flow" doc:id="0fdf9261-8634-4c0a-a763-b15e340c8930" name="common-os-store-sub-flow"/>
+		<flow-ref doc:name="common-parse-template-sub-flow" doc:id="aa04d7b2-4edc-404e-a2ca-e286e49eef0a" name="common-parse-template-sub-flow"/>
+		<logger level="INFO" doc:name="End Log" doc:id="e14db96b-7253-4e90-94a5-cff366a53f69" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow End",&#10;    message: "Flow to get the clue, post it on UI and update the game status ended",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+	</sub-flow>
+</mule>

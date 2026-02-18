@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<sub-flow name="common-os-store-sub-flow" doc:id="fc98a73a-70e9-4f91-802c-6d0366cc2c8b" >
+		<logger level="INFO" doc:name="Start Log" doc:id="15a985bc-cc52-478d-a797-e5c5c51007ba" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Sub Flow Start",&#10;    message: "Sub flow to store or update the key-value pair started",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<os:store doc:name="gameId" doc:id="6175d50c-c96b-4b9a-8821-e435fd722628" key="#[payload.gameId]" objectStore="object-store-config"/>
+		<logger level="INFO" doc:name="End Log" doc:id="fb1a4851-c995-47d3-88a9-61b44eddb3d6" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow End",&#10;    message: "Sub flow to store or update the key-value pair ended",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+	</sub-flow>
+</mule>

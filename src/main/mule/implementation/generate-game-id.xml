@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	
+	<sub-flow name="generate-game-id-sub-flow" doc:id="166e62c8-1f23-43c1-8a90-7acd4aac8e34" >
+		<logger level="INFO" doc:name="Start Log" doc:id="8a979909-65fe-4406-8f4d-de1189037f32" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow Start",&#10;    message: "Sub flow to generate the gameId and show UI started",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;[&#10;  {&#10;    word: &quot;MULESOFT&quot;,&#10;    question: &quot;I am a beast of burden in a digital world, connecting disparate lands of data without moving a physical inch.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;An integration platform for connecting applications.&quot;,&#10;      rhyme: &quot;Cool-soft&quot;,&#10;      synonym: &quot;Integration Platform&quot;&#10;    }&#10;  },&#10;  {&#10;    word: &quot;DATAWEAVE&quot;,&#10;    question: &quot;I speak a language of transformation, turning digital silk purses from sow's ears, but I have no voice.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;The expression language for transforming data.&quot;,&#10;      rhyme: &quot;Data-save&quot;,&#10;      synonym: &quot;Transformation Language&quot;&#10;    }&#10;  },&#10;  {&#10;    word: &quot;PAYLOAD&quot;,&#10;    question: &quot;I am the precious cargo of a digital message, yet I have no weight and can be anything from a single word to a universe of information.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;The main body of data in a message.&quot;,&#10;      rhyme: &quot;Day-load&quot;,&#10;      synonym: &quot;Message Body&quot;&#10;    }&#10;  },&#10;  {&#10;    word: &quot;ANYPOINT&quot;,&#10;    question: &quot;I am a single destination that is everywhere at once, a nexus for digital architects.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;The name of MuleSoft's unified integration platform.&quot;,&#10;      rhyme: &quot;Any-joint&quot;,&#10;      synonym: &quot;Platform&quot;&#10;    }&#10;  },&#10;  {&#10;    word: &quot;STUDIO&quot;,&#10;    question: &quot;I am the workshop where digital tapestries are designed and tested, but no thread or needle is ever touched.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;The Eclipse-based IDE for designing Mule applications.&quot;,&#10;      rhyme: &quot;Video&quot;,&#10;      synonym: &quot;IDE&quot;&#10;    }&#10;  },&#10;  {&#10;    word: &quot;API&quot;,&#10;    question: &quot;I am the silent waiter in a digital restaurant, taking orders between the kitchen and the table without them speaking the same language.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;A contract that allows applications to talk to each other.&quot;,&#10;      rhyme: &quot;See&quot;,&#10;      synonym: &quot;Interface&quot;&#10;    }&#10;  },&#10;  {&#10;    word: &quot;RAML&quot;,&#10;    question: &quot;I am the blueprint for a digital conversation, defining the rules of engagement before a single word is ever exchanged.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;A language for defining RESTful APIs.&quot;,&#10;      rhyme: &quot;Camel&quot;,&#10;      synonym: &quot;API Specification&quot;&#10;    }&#10;  },&#10;  {&#10;    word: &quot;CLOUDHUB&quot;,&#10;    question: &quot;I am the ethereal factory where digital engines run, managed by unseen hands in a place with no physical address.&quot;,&#10;    defaultClues: {&#10;      definition: &quot;MuleSoft's cloud-based integration platform as a service.&quot;,&#10;      rhyme: &quot;Loud-hub&quot;,&#10;      synonym: &quot;iPaaS&quot;&#10;    }&#10;  }&#10;][floor(random() * 8)]]" doc:name="secretWord" doc:id="87d1649a-4ff6-41c9-a62f-14ddff062a4b" variableName="secretWord"/>
+		<ee:transform doc:name="Values For gameId Key" doc:id="b458442e-47f5-484b-8c2f-8d5827f19f0a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	gameId: uuid(),
+	secretWord: vars.secretWord.word, 
+	question: vars.secretWord.question, 
+	displayWord: vars.secretWord.word replace /./ with "_",
+	lives: 6,
+	guessedLetters: [],
+	status: "IN_PROGRESS",
+	message: "A new challenge awaits! Guess a letter.",
+    defaultClues: vars.secretWord.defaultClues
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="common-os-store-sub-flow" doc:id="2d169e4b-130c-4486-b444-1af0d29ec364" name="common-os-store-sub-flow"/>
+		<logger level="INFO" doc:name="Log gameId" doc:id="cf23d0c0-ec83-401d-a456-ab447fbaea38" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "After OS Store",&#10;    message: "New game created with ID: " ++ payload.gameId,&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+		<flow-ref doc:name="common-parse-template-sub-flow" doc:id="ab67b05c-920b-4040-a925-f53ae511c776" name="common-parse-template-sub-flow"/>
+		<logger level="INFO" doc:name="End Log" doc:id="3e8084ad-e2a1-4759-b2b0-6266a70db73f" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    appName: app.name,&#10;    flowName : flow.name,&#10;    position: "Flow End",&#10;    message: "Sub flow to generate the gameId and update the UI ended",&#10;    correlationId: correlationId,&#10;    timestamp: now() &gt;&gt; "UTC"&#10;}]'/>
+	</sub-flow>
+</mule>
